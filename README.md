@@ -123,9 +123,11 @@ Machine: Intel MacBook Pro, quad-core i5-1038NG7 (8 threads), 16GB RAM, Ubuntu 2
 ![Latency percentiles](docs/charts/latency-percentiles.png)
 ![Throughput vs replicas](docs/charts/throughput-vs-replicas.png)
 
-**Live Grafana dashboard** (Phase 3 stack, ~100s of real sustained load — note the queue depth
-pegged at its 5000 capacity while backpressure holds, RSS staying bounded, and lag draining back to
-zero once load stopped):
+**Live Grafana dashboard** (Phase 3 stack, ~100s of real sustained load peaking near 50k events/sec).
+Note the gateway queue depth pegged flat at its 5000 capacity for the whole overload window while
+backpressure holds, `shed/sec` flat at zero throughout (calls block, events are never dropped), and
+process RSS levelling off rather than growing without bound. Consumer group lag is still draining at
+the right edge — the capture ends before it returns to zero:
 
 ![Grafana dashboard under load](docs/charts/grafana-dashboard.png)
 

@@ -256,7 +256,8 @@ Installed (all user-local, no sudo, per this session's established pattern):
 - `ansible-playbook --syntax-check` against `deploy/ansible/bootstrap.yml` — valid.
 - `make helm-template` / `make terraform-validate` targets both work.
 
-**What is BLOCKED: actually creating the kind cluster, `terraform apply`, and the real
+**What was BLOCKED on this first pass (all of it ran green on the second pass — see below): actually
+creating the kind cluster, `terraform apply`, and the real
 replica-count {1,2,4} scaling sweep.** At the point Phase 4 reached this step, free disk was
 468MB — a `kind` node image plus its control-plane data typically needs several GB of headroom, and
 this session already hit 0-free-space disk exhaustion twice during Phase 3 on a machine that had
@@ -406,12 +407,19 @@ that an empty results directory errors — `"no phase0 sweep results found"` —
 emitting a table with invented numbers).
 
 Ran `scripts/run_phase5.sh`: regenerated the README's results table (all four phases' sweep data,
-correctness test results, and the honestly-BLOCKED Phase 4 scaling section with placeholder dashes)
-and both chart PNGs. `throughput-vs-replicas.png` was correctly skipped (not silently generated with
-fake data) since Phase 4's scaling data is BLOCKED — `cmd/report` logs
+correctness test results, and — at that point — the honestly-BLOCKED Phase 4 scaling section with
+placeholder dashes) and two chart PNGs. `throughput-vs-replicas.png` was correctly skipped (not
+silently generated with fake data) because Phase 4's scaling data was BLOCKED at the time —
+`cmd/report` logs
 `"skipping throughput-vs-replicas chart: no valid (non-blocked) phase4 scaling data to chart"` and
 exits 0 rather than erroring the whole run, since that chart being unavailable doesn't invalidate the
 rest of the report.
+
+**Superseded by Phase 4's second pass.** After the user freed disk and the real replica sweep ran
+(`bench/results/phase4_scaling_r{1,2,4}_20260710T02*.json`), `make report` was re-run: the README's
+scaling section now carries the measured 1/2/4-replica numbers instead of placeholder dashes, and
+`throughput-vs-replicas.png` renders from that real data. The skip path above is still what happens
+on BLOCKED or absent data; it just no longer triggers on this machine's results.
 
 Wrote `docs/DEMO.md` (a two-segment, ~50s demo script covering the Phase 1 zero-loss-across-a-
 broker-restart test and the Phase 2 dedup test, plus a terminal-cast-ready command sequence).
