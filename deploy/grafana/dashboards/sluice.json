@@ -1,0 +1,108 @@
+{
+  "title": "Sluice",
+  "uid": "sluice-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Ingest throughput (events/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(sluice_gateway_ingest_events_total[1m])",
+          "legendFormat": "accepted/sec"
+        },
+        {
+          "expr": "rate(sluice_gateway_shed_total[1m])",
+          "legendFormat": "shed/sec"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Consumer group lag",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sluice_consumer_group_lag",
+          "legendFormat": "lag"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Gateway request latency (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(sluice_gateway_request_latency_seconds_bucket[1m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(sluice_gateway_request_latency_seconds_bucket[1m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(sluice_gateway_request_latency_seconds_bucket[1m]))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Gateway queue depth",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "sluice_gateway_queue_depth",
+          "legendFormat": "queue depth"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Process resident memory (RSS)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"sluice-gateway\"}",
+          "legendFormat": "gateway RSS"
+        },
+        {
+          "expr": "process_resident_memory_bytes{job=\"sluice-consumer\"}",
+          "legendFormat": "consumer RSS"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Consumer dedup / DLQ rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(sluice_consumer_dedup_dropped_total[1m])",
+          "legendFormat": "deduped/sec"
+        },
+        {
+          "expr": "rate(sluice_consumer_dlq_total[1m])",
+          "legendFormat": "dlq/sec"
+        },
+        {
+          "expr": "rate(sluice_consumer_consumed_total[1m])",
+          "legendFormat": "consumed/sec"
+        }
+      ]
+    }
+  ]
+}

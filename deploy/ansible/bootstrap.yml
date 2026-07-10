@@ -1,0 +1,62 @@
+---
+- name: Bootstrap Sluice's Kubernetes-side prerequisites
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    kind_cluster_name: sluice
+    kafka_brokers: "localhost:9092"
+    kafka_topics:
+      - telemetry.events
+      - telemetry.events.dlq
+    kafka_partitions: 12
+    timescale_dsn: "postgres://sluice:sluice@localhost:5432/sluice"
+
+  tasks:
+    - name: Check kubectl is installed
+      command: kubectl version --client
+      register: kubectl_check
+      changed_when: false
+      failed_when: kubectl_check.rc != 0
+
+    - name: Check helm is installed
+      command: helm version
+      register: helm_check
+      changed_when: false
+      failed_when: helm_check.rc != 0
+
+    - name: Check kind is installed
+      command: kind version
+      register: kind_check
+      changed_when: false
+      failed_when: kind_check.rc != 0
+
+    - name: Check whether the kind cluster already exists
+      command: kind get clusters
+      register: kind_clusters
+      changed_when: false
+
+    - name: Report kind cluster presence
+      debug:
+        msg: >-
+          {{ 'kind cluster "' + kind_cluster_name + '" already exists' if kind_cluster_name in kind_clusters.stdout_lines
+          else 'kind cluster "' + kind_cluster_name + '" does not exist yet - create it via terraform apply in ../terraform' }}
+
+    - name: Create the telemetry Kafka topics (idempotent - safe to rerun)
+      command: >-
+        {{ playbook_dir }}/../../bin/topicinit
+        -brokers={{ kafka_brokers }}
+        -topics={{ kafka_topics | join(',') }}
+        -partitions={{ kafka_partitions }}
+        -replication=1
+      register: topicinit_result
+      changed_when: "'created' in topicinit_result.stdout"
+      failed_when: false
+
+    - name: Apply the TimescaleDB schema (idempotent - schema.sql uses IF NOT EXISTS throughout)
+      command: >-
+        psql {{ timescale_dsn }} -f {{ playbook_dir }}/../sql/schema.sql
+      register: schema_result
+      changed_when: "'CREATE' in schema_result.stdout"
+      failed_when: false

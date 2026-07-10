@@ -1,0 +1,4 @@
+services:
+  kafka:
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://172.18.0.1:9092

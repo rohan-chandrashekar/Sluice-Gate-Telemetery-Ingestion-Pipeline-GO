@@ -1,0 +1,6 @@
+apiVersion: v2
+name: sluice
+description: Sluice telemetry ingestion pipeline - gateway and consumer
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

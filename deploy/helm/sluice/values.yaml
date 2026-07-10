@@ -1,0 +1,81 @@
+# This chart deploys ONLY the Sluice application pods (gateway + consumer).
+#
+# Kafka, TimescaleDB, and Redis are intentionally NOT part of this chart. On this project's
+# reference machine (16GB RAM, disk-constrained), the data infra runs in docker-compose on the
+# host, and only the Sluice pods run inside the kind cluster — see the top-level README for why.
+#
+# Pods inside kind reach host-published docker-compose ports via the kind bridge network's
+# gateway IP (the container-network equivalent of "the host machine"), NOT via localhost and NOT
+# via a Kubernetes Service. Find that IP with:
+#   docker network inspect kind --format '{{(index .IPAM.Config 0).Gateway}}'
+# and override dataInfra.hostGatewayIP below if it differs from the default (172.18.0.1 is kind's
+# usual default for its "kind" docker network, but is not guaranteed on every machine).
+
+dataInfra:
+  hostGatewayIP: "172.18.0.1"
+  kafkaPort: 9092
+  timescalePort: 5432
+  redisPort: 6379
+  timescaleUser: sluice
+  timescalePassword: sluice
+  timescaleDB: sluice
+
+kafka:
+  topic: telemetry.events
+  dlqTopic: telemetry.events.dlq
+  partitions: 12
+
+gateway:
+  image:
+    repository: sluice-gateway
+    tag: local
+    pullPolicy: IfNotPresent
+  replicas: 1
+  listenPort: 50051
+  metricsPort: 9100
+  workers: 32
+  queue: 5000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+consumer:
+  image:
+    repository: sluice-consumer
+    tag: local
+    pullPolicy: IfNotPresent
+  replicas: 1
+  metricsPort: 9101
+  batch: 500
+  flushInterval: 2s
+  maxRetries: 3
+  dedupEnabled: true
+  dedupTTL: 10m
+  dlqEnabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 8
+  # CPU-based scaling works out of the box on any cluster with metrics-server (kind ships this
+  # via a small extra manifest apply — see deploy/ansible).
+  targetCPUUtilizationPercentage: 70
+  # Lag-based scaling additionally requires a Prometheus Adapter (or KEDA) exposing
+  # `sluice_consumer_group_lag` through the custom/external metrics API. That is intentionally
+  # out of scope for this chart (it's cluster-wide infra, not app config) - enable this once such
+  # an adapter is installed, pointing at the metric this project's consumer already exports.
+  lagBased:
+    enabled: false
+    metricName: sluice_consumer_group_lag
+    targetAverageValue: "10000"

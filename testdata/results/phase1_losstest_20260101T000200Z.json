@@ -1,0 +1,7 @@
+{
+  "phase": "phase1_losstest",
+  "produced": 1000,
+  "consumed": 1000,
+  "pass": true,
+  "machine_tag": "test-machine"
+}

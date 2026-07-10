@@ -1,0 +1,29 @@
+{{- if .Values.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-consumer
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-consumer
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.hpa.targetCPUUtilizationPercentage }}
+    {{- if .Values.hpa.lagBased.enabled }}
+    - type: External
+      external:
+        metric:
+          name: {{ .Values.hpa.lagBased.metricName }}
+        target:
+          type: AverageValue
+          averageValue: {{ .Values.hpa.lagBased.targetAverageValue | quote }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,37 @@
+{
+  "phase": "phase0_c32",
+  "environment": {
+    "go_version": "go1.25.0",
+    "gomaxprocs": 8,
+    "os": "linux",
+    "arch": "amd64",
+    "real_infra": false,
+    "machine_tag": "test-machine",
+    "timestamp": "2026-01-01T00:01:00Z"
+  },
+  "config": {
+    "target": "localhost:50051",
+    "sink": "memory",
+    "workers": 64,
+    "queue": 20000,
+    "duration": "30s",
+    "warmup": "5s",
+    "concurrency": 32,
+    "batch_size": 100,
+    "devices": 10000,
+    "rate_hz": 0
+  },
+  "results": {
+    "events_accepted": 2000000,
+    "events_rejected": 0,
+    "errors": 0,
+    "window_seconds": 30,
+    "throughput_events_per_sec": 200000.0,
+    "latency_ms": {
+      "p50": 2.0,
+      "p95": 4.0,
+      "p99": 6.0,
+      "max": 10.0
+    }
+  }
+}

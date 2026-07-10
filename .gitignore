@@ -1,0 +1,8 @@
+bench/results/
+bin/
+/tmp/
+*.log
+.terraform/
+*.tfstate
+*.tfstate.*
+.claude/

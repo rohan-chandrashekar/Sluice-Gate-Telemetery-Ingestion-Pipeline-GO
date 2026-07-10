@@ -1,0 +1,8 @@
+{
+  "phase": "phase4_scaling",
+  "status": "BLOCKED",
+  "reason": "insufficient disk for kind node image",
+  "free_disk_mb": 468,
+  "required_disk_mb": 3000,
+  "machine_tag": "test-machine"
+}

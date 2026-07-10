@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package sluice.v1;
+
+option go_package = "github.com/rohan-chandrashekar/Sluice-Gate-Telemetery-Ingestion-Pipeline-GO/gen/sluice/v1;sluicev1";
+
+message TelemetryEvent {
+  string device_id = 1;
+  string idempotency_key = 2;
+  int64  event_time_unix_nanos = 3;
+  string metric = 4;
+  double value = 5;
+}
+
+message IngestRequest {
+  repeated TelemetryEvent events = 1;
+}
+
+message IngestResponse {
+  uint64 accepted = 1;
+  uint64 rejected = 2;
+}
+
+service Ingest {
+  rpc Push(IngestRequest) returns (IngestResponse);
+}

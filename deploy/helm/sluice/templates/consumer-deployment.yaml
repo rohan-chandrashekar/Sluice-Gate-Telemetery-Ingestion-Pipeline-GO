@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-consumer
+  labels:
+    app: sluice-consumer
+spec:
+  replicas: {{ .Values.consumer.replicas }}
+  selector:
+    matchLabels:
+      app: sluice-consumer
+  template:
+    metadata:
+      labels:
+        app: sluice-consumer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.consumer.metricsPort }}"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+      containers:
+        - name: consumer
+          image: "{{ .Values.consumer.image.repository }}:{{ .Values.consumer.image.tag }}"
+          imagePullPolicy: {{ .Values.consumer.image.pullPolicy }}
+          args:
+            - -brokers={{ .Values.dataInfra.hostGatewayIP }}:{{ .Values.dataInfra.kafkaPort }}
+            - -topic={{ .Values.kafka.topic }}
+            - -group=sluice-sink
+            - -sink=timescale
+            - -timescale-dsn=postgres://{{ .Values.dataInfra.timescaleUser }}:{{ .Values.dataInfra.timescalePassword }}@{{ .Values.dataInfra.hostGatewayIP }}:{{ .Values.dataInfra.timescalePort }}/{{ .Values.dataInfra.timescaleDB }}
+            - -batch={{ .Values.consumer.batch }}
+            - -flush-interval={{ .Values.consumer.flushInterval }}
+            - -max-retries={{ .Values.consumer.maxRetries }}
+            {{- if .Values.consumer.dedupEnabled }}
+            - -dedup
+            - -redis-addr={{ .Values.dataInfra.hostGatewayIP }}:{{ .Values.dataInfra.redisPort }}
+            - -dedup-ttl={{ .Values.consumer.dedupTTL }}
+            {{- end }}
+            {{- if .Values.consumer.dlqEnabled }}
+            - -dlq
+            - -dlq-topic={{ .Values.kafka.dlqTopic }}
+            {{- end }}
+            - -metrics-addr=:{{ .Values.consumer.metricsPort }}
+          ports:
+            - containerPort: {{ .Values.consumer.metricsPort }}
+              name: metrics
+          resources:
+            {{- toYaml .Values.consumer.resources | nindent 12 }}
